@@ -1,0 +1,49 @@
+extends ../layout
+block styles
+    style.
+        #content { display: none; }
+block scripts
+    script.
+        window.onload = function() {
+            var vm = new Vue({
+                el: '#el',
+                data: { title: null, content: null, buttons: true },
+                methods: {
+                    resize: function(event) {
+                        var element = event.target; element.style.height = '5px'; element.style.height = (element.scrollHeight)+'px';
+                    },
+                    convert: function(contents) { return convert(contents); },
+                    post: function(draft) {
+                        if (vm.title != null && vm.buttons) {
+                            var data = { title: vm.title, content: vm.content, question: true, draft: draft }
+                            vm.buttons = false;
+                            token().then(token => {
+                                var init = { method: 'POST', headers: {'Authorization': 'Bearer ' + token }, body: JSON.stringify(data) }
+                                fetch('/post', init).then(response => { vm.title = null; vm.content = null; location.replace('/user/questions'); });
+                            }).catch(function(error) { alert('An error happened.'); });
+                        }
+                    }
+                }
+            });
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) { document.getElementById('content').style.display = 'block'; }
+                else { location.replace('/'); }
+            });
+            window.addEventListener('beforeunload', (event) => {
+                if (vm.title || vm.content) { event.preventDefault(); event.returnValue = ''; }
+            });
+        }
+block content
+    #content
+        .background.border_top
+            .slim(style="padding: 0;")
+                textarea.border.round8.block(placeholder="タイトル（必須）" @input="resize($event)" spellcheck="false" v-model="title")
+                .height2
+                textarea.border.round8.block.tall(placeholder="本文（省略可）" @input="resize($event)" spellcheck="false" v-model="content")
+                .height2
+                .split.border.round8.white
+                    button#save(style="width: 100%; padding: 1em 0;" class="transparent" @click="post(true)") 下書き保存
+                    button#post(style="width: 100%; padding: 1em 0;" class="left transparent" @click="post(false)") 質問を投稿
+        .slim
+            h1 {{ title }}
+            .content(v-html="convert(content)")

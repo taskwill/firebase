@@ -1,0 +1,72 @@
+extends layout
+block styles
+    style.
+        #content { display: none; }
+block scripts
+    script.
+        window.onload = function() {
+            var question_id = window.location.pathname.split('/').pop();
+            var vm = new Vue({
+                el: '#el',
+                data: { title: null, content: null, notfound: false, buttons: true },
+                methods: {
+                    resize: function(event) {
+                        var element = event.target; element.style.height = '5px'; element.style.height = (element.scrollHeight)+'px';
+                    },
+                    convert: function(contents) { return convert(contents); },
+                    update: function(draft) {
+                        if (vm.title != null && vm.buttons) {
+                            var data = { title: vm.title, content: vm.content, question: true, draft: draft, id: question_id }; vm.buttons = false;
+                            firebase.auth().currentUser.getIdToken(true).then(function(idToken) {
+                                console.log(data);
+                                var init = { method: 'POST', headers: {'Authorization': 'Bearer ' + idToken }, body: JSON.stringify(data) }
+                                fetch('/update', init).then(response => { vm.title = null; vm.content = null; location.replace('/user/questions'); });
+                            });
+                        }
+                    },
+                    delete_question: function() {
+                        if (vm.buttons) {
+                            vm.buttons = false;
+                            token().then(token => {
+                                var data = { question: true, id: question_id };
+                                var init = { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: JSON.stringify(data) }
+                                fetch('/delete', init).then(response => { vm.title = null; vm.content = null; location.replace('/user/questions'); });
+                            });
+                        }
+                    }
+                }
+            });
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) { 
+                    firebase.auth().currentUser.getIdToken(true).then(function(idToken) {
+                        var data = { question_id: question_id };
+                        fetch('/draft_question', { method: 'POST', headers: { Authorization: 'Bearer ' + idToken }, body: JSON.stringify(data)
+                        }).then(function(response) { return response.json(); }).then(function(data) {
+                            console.log(data['title'], data['content']);
+                            vm.title = data['title']; vm.content = data['content']; vm.notfound = data['notfound'];
+                            document.getElementById('content').style.display = 'block';
+                        });
+                    });
+                }
+                else { vm.notfound = true; }
+            });
+            window.addEventListener('beforeunload', (event) => {
+                if (vm.title || vm.content) { event.preventDefault(); event.returnValue = ''; }
+            });
+        }
+block content
+    .slim.center(v-if="notfound" v-cloak) Not found
+    #content(v-else v-cloak)
+        .background
+            .slim(style="padding: 0;")
+                textarea.border.round8.block(placeholder="タイトル（必須）" @input="resize($event)" spellcheck="false" v-model="title")
+                .height2
+                textarea.border.round8.block.tall(placeholder="本文（省略可）" @input="resize($event)" spellcheck="false" v-model="content")
+                .height2
+                .split.border.round8.white
+                    button(style="width: 100%; padding: 1em 0;" class="transparent" @click="delete_question") 削除
+                    button(style="width: 100%; padding: 1em 0;" class="left transparent" @click="update(true)") 下書き保存
+                    button(style="width: 100%; padding: 1em 0;" class="left transparent" @click="update(false)") 質問を投稿
+        .slim
+            h1 {{ title }}
+            .content(v-html="convert(content)")

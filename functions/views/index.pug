@@ -1,0 +1,51 @@
+extends layout
+block styles
+    style.
+        #box { text-align: center; color: #567; font-size: 20px; }
+        #start { font-size: 20px; color: #567; border: 1px solid #cde; padding: 16px 20px; font-style: italic; background: white; width: auto; }
+        h2 { font-size: 32px; }
+        h2 > i { font-size: 12px; margin: auto 8px; }
+block scripts
+    script.
+        window.onload = function() {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().onAuthStateChanged(function(user) {
+                var start = document.getElementById('start'); start.disabled = false;
+                start.addEventListener('click', function() {
+                    if (user) { window.location.href = 'user'; }
+                    else {
+                        firebase.auth().signInWithPopup(provider).then(function() { window.location.href = '/user';
+                        }).catch(function(error) { console.log(error.message); });
+                    }
+                });
+            });
+        }
+block content
+    div(style="text-align: center; border-bottom: 1px solid #cde; padding: 8em 0; background: #fafbfc;")
+        #box
+            strong プライバシー
+            | と
+            strong インセンティブ
+            br
+            | に基づく
+            strong プロブレムソルバー
+        div(style="height: 8em;" disabled)
+        button#start.round8 スタート
+    .slim
+        h2
+            i.material-icons.
+                lock
+            | プライバシー
+        p.
+            ご安心下さい．
+            あなたのアイデンティティは完全に秘匿されます．
+            訪問者は，あなたの質問や回答のみ閲覧することが許可されており，あなたのIDを知ることはありません．
+            質問・回答はいつでもご自由に削除いただけます．
+        h2
+            i.material-icons.
+                monetization_on
+            | インセンティブ
+        p.
+            TaskWillは広告によって運用されているため，その収入のいくらかを質問者・回答者の皆さまに配分いたします．
+            皆さまには高品質な質問・回答をお願いしております．
+            基本的にはページビューに比例するものとお考え下さい．

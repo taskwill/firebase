@@ -1,0 +1,22 @@
+extends ../layout
+block scripts
+    script.
+        window.onload = () => {
+            var vm = new Vue({
+                el: '#el',
+                data: { items: [], expandable: false },
+                methods: { expand: () => { vm.expandable = false; list(vm, false, vm.items[vm.items.length - 1]['id']); } }
+            });
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) { list(vm, false, null); } else { location.replace('/'); }
+            });
+        }
+block content
+    .background(v-if="items.length" v-cloak)
+        .slim.padding0
+            .border.round16.white
+                a.block.border_bottom.padding1(:href="'/answer/'+item.id" v-for="(item, index) in items" v-cloak)
+                    div(:class="{ draft: item.draft }") {{ item.title }}
+                button.padding1(@click="expand" v-if="expandable")
+                    i.material-icons expand_more
+                .height4(v-else)

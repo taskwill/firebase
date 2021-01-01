@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="プライバシーとインセンティブに基づくプロブレムソルバー">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image:alt" content="TaskWill">
+    <meta property="og:image" content="/taskwill.png">
+    <meta property="og:description" content="プライバシーとインセンティブに基づくプロブレムソルバー">
+    <meta property="og:title" content="TaskWill">
+    <link rel="shortcut icon" href="/tw.png" type="image/x-icon">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/tw.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/tw.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/tw.png">
+    <link rel="apple-touch-icon-precomposed" href="/tw.png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined">
+    <link href="https://fonts.googleapis.com/css?family=Cinzel&amp;display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.9.1/firebase-auth.js"></script>
+    <script src="https://apis.google.com/js/platform.js?onload=init" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js" defer></script>
+    <!-- script(defer src="https://cdn.jsdelivr.net/npm/vue")-->
+    <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.0/dist/showdown.min.js"></script>
+    <style>
+      [v-cloak] { display:none; }
+      body { margin: 0; line-height: 2em; }
+      *:focus { outline: none; }
+      h1 { font-size: 24px; font-weight: bold; }
+      button { margin: 0; padding: 0; background: transparent; border: none; cursor: pointer; color: #567; font-size: 16px; width: 100%; }
+      button:focus, a:focus { outline: none; }
+      button::-moz-focus-inner { border: none; }
+      a { text-decoration: none; color: #567; }
+      a:visited { color: #567; }
+      a:hover { cursor: pointer; }
+      textarea { border: none; box-sizing: border-box; overflow: hidden; font-size: 1em; resize: none; word-wrap: break-word; line-height: 2em; }
+      textarea { padding: 1em; width: 100%; height: 4em; font-family: sans-serif; color: #567; border-radius: 8px; -webkit-appearance: none; }
+      #el { color: #567; font-family: sans-serif; }
+      #header { border-bottom: 1px solid #cde; text-align: center; font-family: cinzel, serif; font-size: 24px; color: #567; padding: 1em 0; }
+      .footer { height: 18em; border-top: 1px solid #cde; background: #fafbfc; }
+      .border { border: 1px solid #cde; }
+      .border_top { border-top: 1px solid #cde; }
+      .border_bottom { border-bottom: 1px solid #cde; }
+      .slim { max-width: 40em; margin: 0 auto; padding: 2em; }
+      .white { background: white; }
+      .round8 { border-radius: 8px; }
+      .round16 { border-radius: 16px; }
+      .round32 { border-radius: 32px; }
+      .padding0 { padding: 0; }
+      .padding1 { padding: 1em; }
+      .height1 { height: 1em; }
+      .height2 { height: 2em; }
+      .height4 { height: 4em; }
+      .block { display: block; }
+      .tall { min-height: 16em; }
+      .background { padding: 2em 1em; background: #fafbfc; border-bottom: 1px solid #cde; }
+      .split { display: flex; justify-content: space-between; }
+      .left { border-left: 1px solid #cde; }
+      .transparent { background: transparent; }
+      .content { text-align: justify; }
+      .content a { text-decoration: underline; }
+      .center { text-align: center; }
+      .draft { color: #abc; }
+    </style>
+    <script>
+      var params = { client_id: '' }
+      var firebaseConfig = {
+          apiKey: "",
+          authDomain: "taskwill.com",
+          projectId: "taskwill",
+          appId: ""
+      };
+      firebase.initializeApp(firebaseConfig);
+      function convert(contents) {
+          //![alt text](dropbox?raw=1 or GDrive/uc?id=id) Create the link converter.
+          if (contents) { var converter = new showdown.Converter(); return converter.makeHtml(contents); }
+      }
+      function token() { return firebase.auth().currentUser.getIdToken(true); }
+      var list = (vm, question, last) => {
+          token().then(function(idToken) {
+              var data = { question: question, last: last };
+              fetch('/list', { method: 'POST', headers: { Authorization: 'Bearer ' + idToken }, body: JSON.stringify(data)
+              }).then(response => { return response.json(); }).then(data => {
+                  vm.items = vm.items.concat(data['items']); vm.expandable = data['expandable'];
+              });
+          });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="el">
+      <div id="header"><a href="/">TW</a></div>
+    </div>
+  </body>
+</html>

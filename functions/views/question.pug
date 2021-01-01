@@ -1,0 +1,66 @@
+extends layout
+block scripts
+    script.
+        window.onload = function() {
+            var question_id = window.location.pathname.split('/').pop();
+            var vm = new Vue({
+                el: '#el',
+                data: { mine: false, buttons: true, content: null, user: false },
+                methods: {
+                    delete_question: function() {
+                        if (vm.buttons) {
+                            vm.buttons = false;
+                            token().then(token => {
+                                var data = { question: true, id: question_id };
+                                var init = { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: JSON.stringify(data) }
+                                fetch('/delete', init).then(response => { location.replace('/user/questions'); });
+                            });
+                        }
+                    },
+                    resize: function(event) {
+                        var element = event.target; element.style.height = '5px'; element.style.height = (element.scrollHeight)+'px';
+                    },
+                    convert: function(contents) { return convert(contents); },
+                    post: function(draft) {
+                        if (vm.content != null && vm.buttons) {
+                            var data = { question_id: question_id, content: vm.content, question: false, draft: draft }
+                            vm.buttons = false;
+                            token().then(token => {
+                                var init = { method: 'POST', headers: {'Authorization': 'Bearer ' + token }, body: JSON.stringify(data) }
+                                fetch('/post', init).then(response => { vm.content = null; location.replace('/user/answers'); });
+                            }).catch(function(error) { alert('An error happened.'); });
+                        }
+                    }
+                }
+            });
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) { return; }
+                vm.user = true;
+                token().then(function(idToken) {
+                    var data = { question: true, id: question_id };
+                    fetch('/mine', { method: 'POST', headers: { Authorization: 'Bearer ' + idToken }, body: JSON.stringify(data)
+                    }).then(function(response) { return response.json(); }).then(function(data) { vm.mine = data['mine']; });
+                });
+            });
+            window.addEventListener('beforeunload', (event) => {
+                if (vm.content) { event.preventDefault(); event.returnValue = ''; }
+            });
+        }
+block content
+    .height2
+    .slim(style="padding-top: 0; padding-bottom: 1em;" v-if="mine" v-cloak)
+        button.border.round8.white.padding1(@click="delete_question") 削除
+    .slim(style="padding: 0 2em;")
+        h1= question
+        .content!= content
+    .height2
+    #content(v-if="user" v-cloak)
+        .background.border_top
+            .slim(style="padding: 0;")
+                textarea.border.round8.block.tall(placeholder="本文（省略可）" @input="resize($event)" spellcheck="false" v-model="content")
+                .height2
+                .split.border.round8.white
+                    button#save(style="width: 100%; padding: 1em 0;" class="transparent" @click="post(true)") 下書き保存
+                    button#post(style="width: 100%; padding: 1em 0;" class="left transparent" @click="post(false)") 回答を投稿
+        .slim
+            .content(v-html="convert(content)")

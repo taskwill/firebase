@@ -1,0 +1,34 @@
+extends layout
+block styles
+    style.
+        #content { display: none; }
+        .frame { max-width: 16em; margin: 0 auto; border: 1px solid #cde; border-radius: 32px; background: white; }
+        .window > div > a { display: block; padding: 2em 0; width: 50%; text-align: center; }
+block scripts
+    script.
+        window.onload = function() {
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    document.getElementById('content').style.display = 'block';
+                    document.getElementById('signout').addEventListener('click', function() {
+                        firebase.auth().signOut().then(function() { location.replace('/');
+                        }).catch(function(error) { alert('An error happened.') });
+                    });
+                    document.getElementById('email').innerText = user.email;
+                }
+                else { location.replace('/'); }
+            });
+        }
+block content
+    #content(style="padding: 4em 0; background: #fafbfc; border-bottom: 1px solid #cde;")
+        .frame.window
+            .split(style="border-bottom: 1px solid #cde;")
+                a(href="/user/question") 質問する
+                a(href="/user/answer" style="border-left: 1px solid #cde;") 回答する
+            .split
+                a(href="/user/questions") 過去の質問
+                a(href="/user/answers" style="border-left: 1px solid #cde;") 過去の回答
+        div(style="height: 4em;")
+        .frame
+            #email(style="border-bottom: 1px solid #cde; padding: 1em; text-align: center; word-break: break-all; min-height: 1em;")
+            button#signout(style="display: block; width: 100%; padding: 1em 0; background: transparent;") サインアウト
